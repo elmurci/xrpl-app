@@ -1,0 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+body {
+  background: linear-gradient(rgba(15, 23, 42, 0.88),
+                            rgba(15, 23, 42, 0.88),
+                            rgba(15, 23, 42, 0.88),
+                            rgba(15, 23, 42, 0.88)),
+                            url("/images/background/back.png") 400px 400px;
+  background-size: 400px 400px;
+  background-repeat: no-repeat;
+  background-position: top right;
+}

@@ -33,7 +33,8 @@
               <div></div>
               <div class="flex items-center justify-end pr-16 lg:pr-0">
                 <a
-                  href="https://github.com/NextJSTemplates/startup-nextjs"
+                  href="https://xrpl.app/.well-known/xrp-ledger.toml"
+                  target="_blank"
                   class="rounded-md bg-black/20 py-4 px-8 text-base font-semibold text-black duration-300 ease-in-out hover:bg-black/30 bg-white/20 text-white hover:bg-white/30"
                 >
                   TOML File

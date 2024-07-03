@@ -1,14 +1,8 @@
 import { defineComponent, ref, reactive } from 'vue';
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
-import Chart from 'chart.js/auto';
 import { XrplClient } from 'xrpl-client';
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
   Tooltip,
   Legend,
   RadialLinearScale,
@@ -156,60 +150,83 @@ export default defineComponent({
       }
     }
   },
+  async unmounted() {
+    this.client.destroy();
+  },
   async mounted() {
-    const client = new XrplClient("wss://xrpl.app:6005");
-    await client.ready();
+    try {
+      this.client = new XrplClient("wss://xrpl.app", {
+        assumeOfflineAfterSeconds: 8,
+        maxConnectionAttempts: 3,
+        connectAttemptTimeoutSeconds: 4,
+      })
 
-    this.serverOnline = true;
+      this.client.on("online", () => {
+        this.serverReady = true;
+      });
 
-    console.log("XRP CLient ready");
+      this.client.on("offline", () => {
+        this.serverReady = false;
+      });
 
-    const server = await client.send({
-      "id": "serverInfo",
-      "command": "server_info",
-    });
+      this.client.on("state", (state) => {
+        console.log("state", state);
+      });
 
-    this.serverVersion = server.info.build_version;
+      this.client.on("error", (e) => {
+        console.log("error", e);
+        this.serverError = true;
+      });
 
-    await client.send({
-      "id": "subscribeToLedgerData",
-      "command": "subscribe",
-      "streams": ["ledger"]
-    });
+      await this.client.ready();
 
-    client.on("ledger", async (ledger) => {
-      const request = await client.send(
-        {
-          id: "getLedgerData",
-          command: "ledger",
-          ledger_index: ledger.ledger_index,
-          transactions: true,
-          expand: true,
+      this.serverReady = true;
+
+      console.log("XRP CLient ready");
+
+      const server = await this.client.send({
+        "id": "serverInfo",
+        "command": "server_info",
+      });
+
+      this.serverVersion = server.info.build_version;
+
+      await this.client.send({
+        "id": "subscribeToLedgerData",
+        "command": "subscribe",
+        "streams": ["ledger"]
+      });
+
+      this.client.on("ledger", async (ledger) => {
+        const request = await this.client.send(
+          {
+            id: "getLedgerData",
+            command: "ledger",
+            ledger_index: ledger.ledger_index,
+            transactions: true,
+            expand: true,
+          }
+        );
+
+        const ledger_data = request.ledger;
+        const prevState = this.ledgerData;
+
+        if (prevState.total_coins) {
+          ledger_data["xrp_burned"] = (parseInt(prevState.total_coins) - ledger_data.total_coins) / 1_000_000;
         }
-      );
+        const eData = this.extractChartData(ledger_data.transactions);
+        ledger_data["token_payments"] = eData.tokenPayments;
+        ledger_data["xrp_payments"] = eData.xrpPayments;
+        ledger_data["number_of_accounts"] = eData.numberOfAccounts;
+        ledger_data["chart_data"] = eData.chart;
+        this.ledgerData = ledger_data;
+        this.ledgerCount++;
+      });
 
-      const ledger_data = request.ledger;
-      const prevState = this.ledgerData;
-
-      if (prevState.total_coins) {
-        ledger_data["xrp_burned"] = (parseInt(prevState.total_coins) - ledger_data.total_coins) / 1_000_000;
-      }
-      const eData = this.extractChartData(ledger_data.transactions);
-      ledger_data["token_payments"] = eData.tokenPayments;
-      ledger_data["xrp_payments"] = eData.xrpPayments;
-      ledger_data["number_of_accounts"] = eData.numberOfAccounts;
-      ledger_data["chart_data"] = eData.chart;
-      this.ledgerData = ledger_data;
-      this.ledgerCount++;
-    });
-
-    client.on("online", () => {
-      this.serverOnline = true;
-    });
-
-    client.on("offline", () => {
-      this.serverOnline = false;
-    });
+    } catch (e) {
+      console.log("error", e);
+      this.serverError = true;
+    }
   },
   data() {
     return {
@@ -218,7 +235,9 @@ export default defineComponent({
   },
   setup() {
     return {
-      serverOnline: ref(false),
+      client: {} as XrplClient,
+      serverReady: ref(false),
+      serverError: ref(false),
       serverVersion: ref(""),
       ledgerCount: ref(0)
     }

@@ -4,7 +4,7 @@
           <div class="flex flex-wrap">
             <div class="w-full pt-8">
                 <div class="container">
-                  <div class="flex text-white justify-center" :class="serverOnline && ledgerCount > 1 ? 'show' : 'hidden'">
+                  <div class="flex text-white justify-center" :class="serverReady && ledgerCount > 1 ? 'show' : 'hidden'">
                     <div class="flex-none w-1/3">
                         <div class="grid place-items-center mt-6">
                             <div class="font-semibold text-xl tracking-tight">Version</div>
@@ -41,11 +41,29 @@
                       </div>
                     </div>
                   </div>
-                  <div class="flex justify-center text-yellow mt-16" :class="serverOnline && ledgerCount > 1 ? 'hidden' : 'show'">
+                  <div class="flex justify-center text-green mt-16" v-if="serverReady && !serverError && ledgerCount < 2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span class="ml-6">Connected to server</span>
+                  </div>
+                  <div class="flex justify-center text-yellow mt-16" v-if="!serverError && !serverReady">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span class="ml-6">Connecting to server</span>
+                  </div>
+                  <div class="flex justify-center text-red mt-16" v-if="serverError">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span class="ml-6">Error connecting to server</span>
+                  </div>
+                  <div class="flex justify-center text-yellow mt-16" v-if="serverReady && ledgerCount < 2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
-                    <span class="ml-6">Connecting to server...</span>
+                    <span class="ml-6">Subscribing to ledger information...</span>
                   </div>
                 </div>
             </div>
